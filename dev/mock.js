@@ -9,6 +9,7 @@
  * - ?n=6     number of measures on the Measures tile (1–12)
  * - ?days=60 days of daily data
  * - Summary data is sent last-to-first, as Tableau does.
+ * - "Reverse pill order" in the preview reorders the Measures tile (same data columns).
  */
 (function () {
   var params = new URLSearchParams(location.search);
@@ -84,6 +85,7 @@
     },
     getVisualSpecificationAsync: function () {
       var enc = meas.map(function (m, i) { return { id: 'value', field: { id: '[m' + i + ']', name: m[0] } }; });
+      if (localStorage.getItem('kcmMockReverse') === '1') enc.reverse(); // pills reordered on the tile, same columns
       enc.push({ id: 'date', field: { id: '[snap].[dy]', name: 'DAY(Snapshot Date)' } });
       return Promise.resolve({ activeMarksSpecificationIndex: 0, marksSpecifications: [{ encodings: enc }] });
     },

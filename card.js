@@ -193,9 +193,13 @@
       if (token !== renderToken) return;
 
       var sig = table.error ? '' : columnsSignature(table);
-      var fields = sig ? cachedFields(sig) : null;
+      // The cache is used only for the first draw of a page load: reordering pills on the
+      // Measures tile keeps the same columns, so every later refresh (and a check shortly
+      // after the first draw) asks the Marks card for the current card order.
+      var fields = sig && first ? cachedFields(sig) : null;
       if (fields) {
-        if (first) T.mark('fields from cache (Marks card not asked)');
+        T.mark('fields from cache (Marks card not asked)');
+        setTimeout(function () { verifyFields(sig); }, VERIFY_DELAY);
       } else {
         fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
         tFields = ms();
@@ -230,6 +234,23 @@
       if (first) { T.mark('render failed', err && err.message); T.done('KPI Card Multi load timings'); }
       if (token === renderToken) showHint('Could not read the worksheet data. See the console for details.');
     }
+  }
+
+  // After a draw from cached fields, ask the Marks card once (later, so it doesn't hold up
+  // other extensions on the dashboard) and redraw if the measures were reordered.
+  var VERIFY_DELAY = 4000;
+
+  async function verifyFields (sig) {
+    try {
+      var fields = await withRetry(getEncodedFields, 'getVisualSpecificationAsync');
+      if (!lastFields || !lastTable || columnsSignature(lastTable) !== sig) return; // a newer refresh already ran
+      var names = function (f) { return f.value.concat(f.date).map(function (x) { return x.id + '|' + x.name; }).join('\u0001'); };
+      if (fields.value.length) storeFields(sig, fields);
+      if (names(fields) !== names(lastFields)) {
+        lastFields = fields;
+        renderAll();
+      }
+    } catch (e) { /* keep the cached order */ }
   }
 
   // ---------------------------------------------------------------------------

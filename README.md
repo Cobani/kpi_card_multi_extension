@@ -62,8 +62,11 @@ settings. Settings are one JSON string under the key `kpiCardMulti1` in the work
 
 ## Performance
 
-- One `getSummaryDataAsync` call for all cards; the Marks card (`getVisualSpecificationAsync`) only when this browser
-  hasn't seen the sheet's columns before (cached in localStorage, `kpi-card-multi:fields:v1`).
+- One `getSummaryDataAsync` call for all cards. On a page load the card order comes from this browser's cache
+  (`kpi-card-multi:fields:v1`) so the first draw needs no Marks card call; 4 s later the Marks card
+  (`getVisualSpecificationAsync`) is asked once in the background and the cards are redrawn if the pills were
+  reordered meanwhile. Every later refresh (filters, reordering pills) asks the Marks card, so cards always follow the
+  Measures tile order.
 - A slow handshake is never reloaded (Tableau's queue is just busy); the frame reloads only when a file didn't load or
   Tableau rejected the handshake, and offers *Click to reload* after 90 s.
 

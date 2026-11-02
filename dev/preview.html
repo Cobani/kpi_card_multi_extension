@@ -25,6 +25,7 @@
     </label>
     <button id="fmt" type="button">Format Extension</button>
     <button id="filter" type="button">Filter change</button>
+    <button id="reverse" type="button">Reverse pill order</button>
     <button id="reset" type="button">Reset settings</button>
     <span class="note">Drag the zone's corner to resize (cards wrap below the minimum width).</span>
   </div>
@@ -38,6 +39,10 @@
   function load () { document.getElementById('card').src = '../index.html?mock&n=' + n.value + (/debug/.test(location.search) ? '&debug' : ''); }
   n.addEventListener('change', function () { localStorage.setItem('kcmMockN', n.value); closeDlg(); load(); });
   document.getElementById('reset').addEventListener('click', function () { localStorage.removeItem('kcmMockSettings'); closeDlg(); load(); });
+  document.getElementById('reverse').addEventListener('click', function () {
+    localStorage.setItem('kcmMockReverse', localStorage.getItem('kcmMockReverse') === '1' ? '0' : '1');
+    document.getElementById('card').contentWindow.mockDataChanged(); // Tableau fires SummaryDataChanged on a reorder
+  });
   document.getElementById('filter').addEventListener('click', function () { document.getElementById('card').contentWindow.mockDataChanged(); });
   document.getElementById('fmt').addEventListener('click', function () {
     document.getElementById('card').contentWindow.postMessage({ type: 'kcm-configure' }, '*');
